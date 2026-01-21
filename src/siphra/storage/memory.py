@@ -7,7 +7,7 @@ from siphra.account import Account, AccountBalance
 from siphra.exceptions import AccountNotFoundError, DuplicateAccountError
 from siphra.storage.base import StorageBackend
 from siphra.transaction import Transaction
-from siphra.types import AccountId, TransactionId, TransactionStatus
+from siphra.types import AccountId, EntryType, TransactionId, TransactionStatus
 
 
 class MemoryStorage(StorageBackend):
@@ -96,7 +96,7 @@ class MemoryStorage(StorageBackend):
                 continue
             for entry in tx.entries:
                 if entry.account_id == account_id:
-                    if entry.is_debit:
+                    if entry.entry_type == EntryType.DEBIT:
                         debit_total += entry.amount
                     else:
                         credit_total += entry.amount

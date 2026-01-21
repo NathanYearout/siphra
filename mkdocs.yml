@@ -1,8 +1,8 @@
 site_name: Siphra
-site_description: A modern Python SDK for double-entry ledgering
-site_url: https://yourusername.github.io/siphra
-repo_url: https://github.com/yourusername/siphra
-repo_name: yourusername/siphra
+site_description: A Python SDK for double-entry ledgering
+site_url: https://nathanyearout.github.io/siphra
+repo_url: https://github.com/nathanyearout/siphra
+repo_name: nathanyearout/siphra
 
 theme:
   name: material
@@ -75,12 +75,12 @@ markdown_extensions:
 nav:
   - Home: index.md
   - Getting Started:
-    - Quickstart: quickstart.md
+      - Quickstart: quickstart.md
   - API Reference: reference/
 
 extra:
   social:
     - icon: fontawesome/brands/github
-      link: https://github.com/yourusername/siphra
+      link: https://github.com/nathanyearout/siphra
     - icon: fontawesome/brands/python
       link: https://pypi.org/project/siphra/

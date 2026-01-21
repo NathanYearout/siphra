@@ -77,13 +77,13 @@ if __name__ == "__main__":
 
 ## Documentation
 
-Full documentation is available at [https://yourusername.github.io/siphra](https://yourusername.github.io/siphra)
+Full documentation is available at [https://nathanyearout.github.io/siphra](https://nathanyearout.github.io/siphra)
 
 ## Development
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/siphra.git
+git clone https://github.com/nathanyearout/siphra.git
 cd siphra
 
 # Install dependencies with uv

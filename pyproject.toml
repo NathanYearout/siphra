@@ -46,7 +46,7 @@ docs = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/yourusername/siphra"
+Homepage = "https://github.com/nathanyearout/siphra"
 
 [build-system]
 requires = ["hatchling"]

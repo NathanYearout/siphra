@@ -18,6 +18,8 @@ from siphra.types import (
     TransactionStatus,
 )
 
+ZERO = Decimal("0")
+
 
 class Entry(BaseModel):
     model_config = ConfigDict(frozen=True)
@@ -25,21 +27,13 @@ class Entry(BaseModel):
     id: EntryId = Field(default_factory=lambda: EntryId(uuid4()))
     account_id: AccountId
     entry_type: EntryType
-    amount: Decimal = Field(gt=Decimal("0"))
+    amount: Decimal = Field(gt=ZERO)
     currency_code: str = Field(min_length=3, max_length=4)
     description: str = Field(default="", max_length=500)
 
     @property
-    def is_debit(self) -> bool:
-        return self.entry_type == EntryType.DEBIT
-
-    @property
-    def is_credit(self) -> bool:
-        return self.entry_type == EntryType.CREDIT
-
-    @property
     def signed_amount(self) -> Decimal:
-        return self.amount if self.is_debit else -self.amount
+        return self.amount if self.entry_type == EntryType.DEBIT else -self.amount
 
 
 class Transaction(BaseModel):
@@ -56,33 +50,23 @@ class Transaction(BaseModel):
     posted_at: Timestamp | None = None
 
     @model_validator(mode="after")
-    def validate_balanced(self) -> Self:
-        if self.debit_total != self.credit_total:
-            raise BalanceError(
-                f"Unbalanced: debits={self.debit_total}, credits={self.credit_total}",
-                debit_total=self.debit_total,
-                credit_total=self.credit_total,
-            )
+    def _check_balance(self) -> Self:
+        debits = sum((e.amount for e in self.entries if e.entry_type == EntryType.DEBIT), ZERO)
+        credits = sum((e.amount for e in self.entries if e.entry_type == EntryType.CREDIT), ZERO)
+        if debits != credits:
+            raise BalanceError(f"Unbalanced: debits={debits}, credits={credits}", debits, credits)
         return self
 
     @model_validator(mode="after")
-    def validate_currencies(self) -> Self:
-        currencies = {entry.currency_code for entry in self.entries}
+    def _check_single_currency(self) -> Self:
+        currencies = {e.currency_code for e in self.entries}
         if len(currencies) > 1:
             raise ValidationError(f"Mixed currencies not allowed: {currencies}")
         return self
 
     @property
-    def debit_total(self) -> Decimal:
-        return sum((e.amount for e in self.entries if e.is_debit), start=Decimal("0"))
-
-    @property
-    def credit_total(self) -> Decimal:
-        return sum((e.amount for e in self.entries if e.is_credit), start=Decimal("0"))
-
-    @property
     def amount(self) -> Decimal:
-        return self.debit_total
+        return sum((e.amount for e in self.entries if e.entry_type == EntryType.DEBIT), ZERO)
 
     @property
     def currency_code(self) -> str:
@@ -92,10 +76,6 @@ class Transaction(BaseModel):
     def is_posted(self) -> bool:
         return self.status == TransactionStatus.POSTED
 
-    @property
-    def is_voided(self) -> bool:
-        return self.status == TransactionStatus.VOIDED
-
     def post(self) -> Self:
         if self.status != TransactionStatus.PENDING:
             raise ValidationError(f"Cannot post transaction with status {self.status}")
@@ -103,22 +83,23 @@ class Transaction(BaseModel):
             update={"status": TransactionStatus.POSTED, "posted_at": datetime.now(UTC)}
         )
 
-    def create_reversal(self, description: str | None = None) -> Transaction:
+    def reverse(self, description: str | None = None) -> Transaction:
         if self.status != TransactionStatus.POSTED:
             raise ValidationError("Can only reverse posted transactions")
 
-        reversed_entries = tuple(
-            Entry(
-                account_id=entry.account_id,
-                entry_type=EntryType.CREDIT if entry.is_debit else EntryType.DEBIT,
-                amount=entry.amount,
-                currency_code=entry.currency_code,
-            )
-            for entry in self.entries
-        )
+        def flip(t: EntryType) -> EntryType:
+            return EntryType.CREDIT if t == EntryType.DEBIT else EntryType.DEBIT
 
         return Transaction(
-            entries=reversed_entries,
+            entries=tuple(
+                Entry(
+                    account_id=e.account_id,
+                    entry_type=flip(e.entry_type),
+                    amount=e.amount,
+                    currency_code=e.currency_code,
+                )
+                for e in self.entries
+            ),
             description=description or f"Reversal of: {self.description}",
             reference=f"REV-{self.reference}" if self.reference else "",
             metadata={"reversed_transaction_id": str(self.id)},
@@ -126,60 +107,35 @@ class Transaction(BaseModel):
 
 
 class TransactionBuilder:
+    __slots__ = ("_desc", "_ref", "_entries", "_meta", "_effective")
+
     def __init__(self, description: str = "", reference: str = "") -> None:
-        self._description = description
-        self._reference = reference
+        self._desc = description
+        self._ref = reference
         self._entries: list[Entry] = []
-        self._metadata: Metadata = {}
-        self._effective_date: datetime | None = None
+        self._meta: Metadata = {}
+        self._effective: datetime | None = None
 
-    def debit(
-        self, account_id: AccountId, amount: Decimal, currency_code: str, description: str = ""
-    ) -> Self:
-        self._entries.append(
-            Entry(
-                account_id=account_id,
-                entry_type=EntryType.DEBIT,
-                amount=amount,
-                currency_code=currency_code,
-                description=description,
-            )
-        )
+    def _add(self, kind: EntryType, account: AccountId, amount: Decimal, currency: str) -> Self:
+        self._entries.append(Entry(account_id=account, entry_type=kind, amount=amount, currency_code=currency))
         return self
 
-    def credit(
-        self, account_id: AccountId, amount: Decimal, currency_code: str, description: str = ""
-    ) -> Self:
-        self._entries.append(
-            Entry(
-                account_id=account_id,
-                entry_type=EntryType.CREDIT,
-                amount=amount,
-                currency_code=currency_code,
-                description=description,
-            )
-        )
+    def debit(self, account: AccountId, amount: Decimal, currency: str) -> Self:
+        return self._add(EntryType.DEBIT, account, amount, currency)
+
+    def credit(self, account: AccountId, amount: Decimal, currency: str) -> Self:
+        return self._add(EntryType.CREDIT, account, amount, currency)
+
+    def meta(self, key: str, value: str | int | float | bool | None) -> Self:
+        self._meta[key] = value
         return self
 
-    def with_metadata(self, key: str, value: str | int | float | bool | None) -> Self:
-        self._metadata[key] = value
-        return self
-
-    def with_effective_date(self, date: datetime) -> Self:
-        self._effective_date = date
+    def effective(self, date: datetime) -> Self:
+        self._effective = date
         return self
 
     def build(self) -> Transaction:
-        if len(self._entries) < 2:
-            raise ValidationError("Transaction must have at least 2 entries")
-
-        kwargs: dict = {
-            "entries": tuple(self._entries),
-            "description": self._description,
-            "reference": self._reference,
-            "metadata": self._metadata,
-        }
-        if self._effective_date:
-            kwargs["effective_date"] = self._effective_date
-
+        kwargs: dict = {"entries": tuple(self._entries), "description": self._desc, "reference": self._ref, "metadata": self._meta}
+        if self._effective:
+            kwargs["effective_date"] = self._effective
         return Transaction(**kwargs)

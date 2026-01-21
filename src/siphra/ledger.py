@@ -115,10 +115,10 @@ class Ledger:
             builder.credit(account_id, amount, currency)
 
         if effective_date:
-            builder.with_effective_date(effective_date)
+            builder.effective(effective_date)
         if metadata:
             for key, value in metadata.items():
-                builder.with_metadata(key, value)
+                builder.meta(key, value)
 
         transaction = builder.build()
         if auto_post:
@@ -158,7 +158,7 @@ class Ledger:
         if original.status != TransactionStatus.POSTED:
             raise ImmutableTransactionError(transaction_id)
 
-        reversal = original.create_reversal(
+        reversal = original.reverse(
             description=f"Void: {original.description}" + (f" - {reason}" if reason else "")
         )
         reversal = reversal.post()
