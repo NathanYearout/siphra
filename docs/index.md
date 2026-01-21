@@ -1,8 +1,13 @@
 # Siphra
 
 **A modern Python SDK for double-entry ledgering.**
+Note: Siphra is pronounced "SIF-rah" and is derived from the ancient Aramaic word "book".
 
 Siphra provides a type-safe, async-first API for implementing double-entry bookkeeping in Python applications. It enforces accounting principles at the type level and supports multiple storage backends.
+
+## Methodology
+
+While some SDKs allow for unbalanced transactions or mutable transaction histories, Siphra is designed to uphold the integrity of financial data by enforcing double-entry principles and immutability. This makes it suitable for applications requiring reliable accounting records, such as financial software, ERP systems, and auditing tools, but less so for casual expense tracking or personal finance apps.
 
 ## Features
 

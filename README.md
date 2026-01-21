@@ -2,43 +2,36 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-**A modern Python SDK for double-entry ledgering.**
+A Python library for double-entry bookkeeping.
 
-Siphra provides a type-safe, async-first API for implementing double-entry bookkeeping in Python applications. It enforces accounting principles at the type level and supports multiple storage backends. This project was started to power upcoming projects, as the current SDKs on the market were unmaintained and not easily modifyable.
+I built this because the existing ledger libraries were either abandoned or too rigid to customize. Siphra gives you type-safe, async accounting primitives that you can plug into your own projects.
 
-## Features
+## What it does
 
-- **Type-Safe**: Full type hints with Pydantic models ensure data integrity
-- **Async-First**: Built for modern async Python applications
-- **Double-Entry Enforcement**: Transactions automatically validate that debits equal credits
-- **Multi-Currency**: Native support for fiat and cryptocurrency with configurable precision
-- **Pluggable Storage**: Memory, SQLite, and PostgreSQL backends (extensible)
-- **Immutable Audit Trail**: Posted transactions cannot be modified, only voided with reversals
-- **Modern Python**: Requires Python 3.12+, uses latest language features
+- Enforces double-entry rules (debits must equal credits)
+- Handles multiple currencies including crypto
+- Keeps an immutable audit trail—posted transactions can only be voided, never edited
+- Works with in-memory, SQLite, or PostgreSQL storage
+- Requires Python 3.12+
 
-## Installation
+## Install
 
 ```bash
-# Basic installation
 pip install siphra
 
-# With SQLite support
+# or with a storage backend
 pip install siphra[sqlite]
-
-# With PostgreSQL support
 pip install siphra[postgres]
-
-# All storage backends
 pip install siphra[all]
 ```
 
-Or with uv (recommended):
+Or with uv:
 
 ```bash
 uv add siphra
 ```
 
-## Quick Start
+## Usage
 
 ```python
 import asyncio
@@ -49,7 +42,6 @@ from siphra.storage import MemoryStorage
 
 
 async def main():
-    # Initialize ledger with in-memory storage
     storage = MemoryStorage()
     ledger = Ledger(storage, default_currency="USD")
 
@@ -57,45 +49,33 @@ async def main():
     cash = await ledger.create_account("1000", "Cash", AccountType.ASSET)
     revenue = await ledger.create_account("4000", "Sales Revenue", AccountType.REVENUE)
 
-    # Record a sale - debits must equal credits
+    # Record a sale
     tx = await ledger.record_transaction(
         description="Product sale",
         debits=[(cash.id, Decimal("99.99"))],
         credits=[(revenue.id, Decimal("99.99"))],
     )
 
-    # Check balances
-    cash_balance = await ledger.get_balance(cash.id)
-    print(f"Cash: ${cash_balance}")  # Cash: $99.99
+    balance = await ledger.get_balance(cash.id)
+    print(f"Cash: ${balance}")  # Cash: $99.99
 
 
 if __name__ == "__main__":
     asyncio.run(main())
 ```
 
-## Documentation
+## Docs
 
-Full documentation is available at [https://nathanyearout.github.io/siphra](https://nathanyearout.github.io/siphra)
+[nathanyearout.github.io/siphra](https://nathanyearout.github.io/siphra)
 
 ## Development
 
 ```bash
-# Clone the repository
 git clone https://github.com/nathanyearout/siphra.git
 cd siphra
 
-# Install dependencies with uv
 uv sync --all-extras --dev
-
-# Run tests
 uv run pytest
-
-# Run linting
 uv run ruff check src tests
-
-# Run type checking
 uv run mypy src
-
-# Build documentation locally
-uv run mkdocs serve
 ```
