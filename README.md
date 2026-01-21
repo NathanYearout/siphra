@@ -6,7 +6,7 @@
 
 **A modern Python SDK for double-entry ledgering.**
 
-Siphra provides a type-safe, async-first API for implementing double-entry bookkeeping in Python applications. It enforces accounting principles at the type level and supports multiple storage backends.
+Siphra provides a type-safe, async-first API for implementing double-entry bookkeeping in Python applications. It enforces accounting principles at the type level and supports multiple storage backends. This project was started to power upcoming projects, as the current SDKs on the market were unmaintained and not easily modifyable.
 
 ## Features
 
@@ -101,11 +101,3 @@ uv run mypy src
 # Build documentation locally
 uv run mkdocs serve
 ```
-
-## Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-## License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
