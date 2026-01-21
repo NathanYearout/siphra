@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 from decimal import Decimal
-from typing import Self
+from typing import Any, Self
 from uuid import uuid4
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
@@ -136,7 +136,7 @@ class TransactionBuilder:
         return self
 
     def build(self) -> Transaction:
-        kwargs: dict = {
+        kwargs: dict[str, Any] = {
             "entries": tuple(self._entries),
             "description": self._desc,
             "reference": self._ref,
