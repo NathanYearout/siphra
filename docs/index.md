@@ -30,7 +30,7 @@ async def main():
     cash = await ledger.create_account("1000", "Cash", AccountType.ASSET)
     revenue = await ledger.create_account("4000", "Sales Revenue", AccountType.REVENUE)
 
-    # Record a sale - debits must equal credits (enforced!)
+    # Record a sale - debits must equal credits
     tx = await ledger.record_transaction(
         description="Product sale",
         debits=[(cash.id, Decimal("99.99"))],
