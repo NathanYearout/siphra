@@ -1,7 +1,5 @@
 # Siphra
 
-[![PyPI version](https://badge.fury.io/py/siphra.svg)](https://badge.fury.io/py/siphra)
-[![Python versions](https://img.shields.io/pypi/pyversions/siphra.svg)](https://pypi.org/project/siphra/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 **A modern Python SDK for double-entry ledgering.**
