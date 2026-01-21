@@ -117,9 +117,7 @@ class TransactionBuilder:
         self._effective: datetime | None = None
 
     def _add(self, kind: EntryType, account: AccountId, amount: Decimal, currency: str) -> Self:
-        entry = Entry(
-            account_id=account, entry_type=kind, amount=amount, currency_code=currency
-        )
+        entry = Entry(account_id=account, entry_type=kind, amount=amount, currency_code=currency)
         self._entries.append(entry)
         return self
 
