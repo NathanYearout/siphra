@@ -107,7 +107,7 @@ class Transaction(BaseModel):
 
 
 class TransactionBuilder:
-    __slots__ = ("_desc", "_ref", "_entries", "_meta", "_effective")
+    __slots__ = ("_desc", "_effective", "_entries", "_meta", "_ref")
 
     def __init__(self, description: str = "", reference: str = "") -> None:
         self._desc = description
@@ -117,7 +117,10 @@ class TransactionBuilder:
         self._effective: datetime | None = None
 
     def _add(self, kind: EntryType, account: AccountId, amount: Decimal, currency: str) -> Self:
-        self._entries.append(Entry(account_id=account, entry_type=kind, amount=amount, currency_code=currency))
+        entry = Entry(
+            account_id=account, entry_type=kind, amount=amount, currency_code=currency
+        )
+        self._entries.append(entry)
         return self
 
     def debit(self, account: AccountId, amount: Decimal, currency: str) -> Self:
@@ -135,7 +138,12 @@ class TransactionBuilder:
         return self
 
     def build(self) -> Transaction:
-        kwargs: dict = {"entries": tuple(self._entries), "description": self._desc, "reference": self._ref, "metadata": self._meta}
+        kwargs: dict = {
+            "entries": tuple(self._entries),
+            "description": self._desc,
+            "reference": self._ref,
+            "metadata": self._meta,
+        }
         if self._effective:
             kwargs["effective_date"] = self._effective
         return Transaction(**kwargs)
