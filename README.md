@@ -10,7 +10,7 @@ I built this because the existing ledger libraries were either abandoned or too 
 
 - Enforces double-entry rules (debits must equal credits)
 - Handles multiple currencies including crypto
-- Keeps an immutable audit trail—posted transactions can only be voided, never edited
+- Keeps an immutable audit trail-posted transactions can only be voided, never edited
 - Works with in-memory, SQLite, or PostgreSQL storage
 - Requires Python 3.12+
 
